@@ -18,6 +18,8 @@ from deepgram import (
     PrerecordedOptions,
 )
 
+AUDIO_FILE = 'new_output.wav'
+
 
 def get_data():
     try:
@@ -88,7 +90,13 @@ async def address(ctx: Context):
     
 @DeepGram_agent.on_message(model=Message)
 async def handle_query_response(ctx: Context, sender: str, msg: Message):
-    message = str(input("You wanna Start Press Y: "))
+    message = str(input("You wanna Start give some prompt: "))
+    await ctx.send(Gemini_address, Message(message=message))
+
+@DeepGram_agent.on_query(model=Message)
+async def handle_query_response(ctx: Context, sender: str, msg: Message):
+    message = str(input("You wanna Start give some prompt: "))
+    await ctx.send(Gemini_address, Message(message=message))
     
 
 

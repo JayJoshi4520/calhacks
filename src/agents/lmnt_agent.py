@@ -16,6 +16,12 @@ class Message(Model):
     message: str
 
 
+class BlobRequest(Model):
+    blob_data: str
+
+class BlobResponse(Model):
+    blobs: list[str]
+
 
 LMNT_agent = Agent(
     name="LMNT Agent",
@@ -53,8 +59,31 @@ async def handle_query_response_LMNT(ctx: Context, sender: str, msg: Message):
                 count += 1
     await ctx.send(DeepGram_Address, Message(message="Audio has been Generated"))
     
-
-
+@LMNT_agent.on_query(model=BlobRequest, replies={BlobResponse})
+async def handle_query_api_response_LMNT(ctx: Context, sender: str, msg: BlobRequest):
+    count = 0
+    base64_blobs = []  # List to store base64-encoded .wav files
+    
+    async with Speech(LMNT_API_KEY) as speech:
+        full_message = ast.literal_eval(msg.blob_data)  # Convert the message to a list of sentences
+        
+        for sentence in full_message:
+            synthesis = await speech.synthesize(sentence, voice='lily', format='wav')
+            
+            # Save .wav to a file
+            wav_file_name = f'output{count}.wav'
+            with open(wav_file_name, 'wb') as f:
+                f.write(synthesis['audio'])
+            
+            # Encode the .wav file as base64
+            with open(wav_file_name, 'rb') as f:
+                encoded_blob = base64.b64encode(f.read()).decode('utf-8')
+                base64_blobs.append(encoded_blob)  # Append encoded blob to the list
+            
+            count += 1
+    
+    # Send the array of base64-encoded .wav files as a response
+    await ctx.send(sender, BlobResponse(blobs=base64_blobs))
 
 
 

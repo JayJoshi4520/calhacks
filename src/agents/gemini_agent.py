@@ -6,7 +6,6 @@ import google.generativeai as genai
 
 
 
-
 LMNT_API_KEY = 'agent1q0apuzjk92w9x4rsrcaz2agpnl0hlu9xh468ccu66lhdq37z82n6sjdgq7f'
 
 
@@ -14,7 +13,8 @@ LMNT_API_KEY = 'agent1q0apuzjk92w9x4rsrcaz2agpnl0hlu9xh468ccu66lhdq37z82n6sjdgq7
 class Message(Model):
     message: str
 
-
+class Response(Model):
+    text: str
 
 Gemini_agent = Agent(
     name="Gemini Agent",
@@ -94,3 +94,15 @@ async def handle_query_response(ctx: Context, sender: str, msg: Message):
     print(type(message))
     ctx.logger.info(message)
     await ctx.send(LMNT_API_KEY, Message(message=str(message)))
+
+@Gemini_agent.on_query(model=Message, replies={Response})
+async def handle_query_api_response(ctx: Context, sender: str, msg: Message):
+
+    try: 
+        response = await handle_message(msg.message)
+        print("Bellow is type in gemini")
+        print(type(response))
+        ctx.logger.info(response)
+        await ctx.send(sender, Response(text=str(response)))
+    except Exception:
+        await ctx.send(sender, Response(text="fail"))
